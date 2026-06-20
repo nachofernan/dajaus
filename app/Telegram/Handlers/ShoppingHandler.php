@@ -25,8 +25,31 @@ class ShoppingHandler
             return;
         }
 
-        $lines = $items->map(fn($i) => "• {$i->name}")->join("\n");
+        $lines = $items->map(function ($i) {
+            $line = ($i->is_favorite ? '⭐ ' : '• ') . $i->name;
+            if ($i->notes) {
+                $line .= " _({$i->notes})_";
+            }
+            return $line;
+        })->join("\n");
+
         $bot->sendMessage("🛒 *Lista de compras:*\n\n{$lines}", parse_mode: 'Markdown');
+    }
+
+    public function favorites(Nutgram $bot): void
+    {
+        /** @var User $user */
+        $user = $bot->get('user');
+
+        $items = $user->shoppingItems()->where('is_favorite', true)->orderBy('name')->get();
+
+        if ($items->isEmpty()) {
+            $bot->sendMessage('No tenés items favoritos. Marcalos con la ⭐ desde la web.');
+            return;
+        }
+
+        $lines = $items->map(fn($i) => "⭐ {$i->name}" . ($i->isPending() ? '' : ' _(comprado)_'))->join("\n");
+        $bot->sendMessage("*Tus favoritos:*\n\n{$lines}", parse_mode: 'Markdown');
     }
 
     public function add(Nutgram $bot): void

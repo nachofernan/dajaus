@@ -3,29 +3,45 @@
 namespace App\Livewire\Plants;
 
 use App\Models\Plant;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class PlantManager extends Component
 {
+    use WithFileUploads;
+
     public string $name = '';
+    public $photo = null;
     public ?int $editingId = null;
     public ?int $viewingLogsId = null;
 
     protected $rules = [
         'name' => 'required|string|max:100',
+        'photo' => 'nullable|image|max:5120',
     ];
 
     public function save(): void
     {
         $this->validate();
 
-        if ($this->editingId) {
-            auth()->user()->plants()->findOrFail($this->editingId)->update(['name' => $this->name]);
-        } else {
-            auth()->user()->plants()->create(['name' => $this->name]);
+        $data = ['name' => $this->name];
+
+        if ($this->photo) {
+            $data['photo_path'] = $this->photo->store('plants', 'public');
         }
 
-        $this->reset('name', 'editingId');
+        if ($this->editingId) {
+            $plant = auth()->user()->plants()->findOrFail($this->editingId);
+            if ($this->photo && $plant->photo_path) {
+                Storage::disk('public')->delete($plant->photo_path);
+            }
+            $plant->update($data);
+        } else {
+            auth()->user()->plants()->create($data);
+        }
+
+        $this->reset('name', 'photo', 'editingId');
     }
 
     public function edit(Plant $plant): void
@@ -33,11 +49,16 @@ class PlantManager extends Component
         $this->editingId = $plant->id;
         $this->name = $plant->name;
         $this->viewingLogsId = null;
+        $this->reset('photo');
     }
 
     public function delete(Plant $plant): void
     {
-        auth()->user()->plants()->findOrFail($plant->id)->delete();
+        $plant = auth()->user()->plants()->findOrFail($plant->id);
+        if ($plant->photo_path) {
+            Storage::disk('public')->delete($plant->photo_path);
+        }
+        $plant->delete();
         if ($this->viewingLogsId === $plant->id) {
             $this->viewingLogsId = null;
         }
@@ -57,7 +78,7 @@ class PlantManager extends Component
 
     public function cancelEdit(): void
     {
-        $this->reset('editingId', 'name');
+        $this->reset('editingId', 'name', 'photo');
     }
 
     public function render()

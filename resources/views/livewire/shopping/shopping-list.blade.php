@@ -37,19 +37,50 @@
                     </h3>
                 </div>
                 @forelse ($pending as $item)
-                    <div class="flex items-center justify-between px-6 py-3 border-b border-gray-50 last:border-0">
-                        <label class="flex items-center gap-3 cursor-pointer flex-1">
-                            <input
-                                type="checkbox"
-                                wire:click="toggle({{ $item->id }})"
-                                class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500 cursor-pointer"
-                            />
-                            <span class="text-gray-800">{{ $item->name }}</span>
-                        </label>
-                        <button wire:click="delete({{ $item->id }})"
-                            class="text-gray-300 hover:text-red-500 transition ml-4">
-                            ✕
-                        </button>
+                    <div class="px-6 py-3 border-b border-gray-50 last:border-0">
+                        <div class="flex items-center justify-between">
+                            <label class="flex items-center gap-3 cursor-pointer flex-1">
+                                <input
+                                    type="checkbox"
+                                    wire:click="toggle({{ $item->id }})"
+                                    class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500 cursor-pointer"
+                                />
+                                <span class="text-gray-800">{{ $item->name }}</span>
+                            </label>
+                            <div class="flex items-center gap-1 ml-4">
+                                <button wire:click="toggleFavorite({{ $item->id }})"
+                                    title="Favorito"
+                                    class="transition {{ $item->is_favorite ? 'text-amber-400' : 'text-gray-300 hover:text-amber-400' }}">
+                                    {{ $item->is_favorite ? '⭐' : '☆' }}
+                                </button>
+                                <button wire:click="editNotes({{ $item->id }})"
+                                    title="Nota"
+                                    class="text-gray-300 hover:text-blue-500 transition">
+                                    📝
+                                </button>
+                                <button wire:click="delete({{ $item->id }})"
+                                    class="text-gray-300 hover:text-red-500 transition">
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+
+                        @if ($item->notes && $editingNotesId !== $item->id)
+                            <p class="text-xs text-gray-400 mt-1 ml-7">{{ $item->notes }}</p>
+                        @endif
+
+                        @if ($editingNotesId === $item->id)
+                            <form wire:submit="saveNotes" class="flex gap-2 mt-2 ml-7">
+                                <input
+                                    wire:model="notesInput"
+                                    type="text"
+                                    placeholder="Marca, tienda, precio..."
+                                    class="flex-1 text-xs border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <button type="submit" class="text-xs text-blue-600 hover:underline">Guardar</button>
+                                <button type="button" wire:click="cancelNotes" class="text-xs text-gray-400 hover:underline">Cancelar</button>
+                            </form>
+                        @endif
                     </div>
                 @empty
                     <div class="px-6 py-8 text-center text-gray-400 text-sm">
@@ -82,10 +113,17 @@
                                 />
                                 <span class="text-gray-400 line-through">{{ $item->name }}</span>
                             </label>
-                            <button wire:click="delete({{ $item->id }})"
-                                class="text-gray-300 hover:text-red-500 transition ml-4">
-                                ✕
-                            </button>
+                            <div class="flex items-center gap-1 ml-4">
+                                <button wire:click="toggleFavorite({{ $item->id }})"
+                                    title="Favorito — sobrevive a 'Limpiar'"
+                                    class="transition {{ $item->is_favorite ? 'text-amber-400' : 'text-gray-300 hover:text-amber-400' }}">
+                                    {{ $item->is_favorite ? '⭐' : '☆' }}
+                                </button>
+                                <button wire:click="delete({{ $item->id }})"
+                                    class="text-gray-300 hover:text-red-500 transition">
+                                    ✕
+                                </button>
+                            </div>
                         </div>
                     @endforeach
                 </div>

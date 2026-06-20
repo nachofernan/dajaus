@@ -7,12 +7,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ShoppingItem extends Model
 {
-    protected $fillable = ['user_id', 'name', 'purchased_at'];
+    protected $fillable = ['user_id', 'name', 'purchased_at', 'notes', 'is_favorite'];
 
     protected function casts(): array
     {
         return [
             'purchased_at' => 'datetime',
+            'is_favorite' => 'boolean',
         ];
     }
 

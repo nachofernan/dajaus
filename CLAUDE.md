@@ -63,10 +63,15 @@ proyecto/
 - Marcar/desmarcar como comprado
 - Eliminar items definitivamente (opcional)
 
+**Flujo web (extendido)**:
+- Cada item puede tener una nota libre (marca, tienda, precio aproximado)
+- Cada item puede marcarse como favorito (⭐) — los favoritos sobreviven a "Limpiar comprados", para tener acceso rápido a los que se compran siempre
+
 **Flujo Telegram**:
-- `/lista` → devuelve solo los items **pendientes**
+- `/lista` → devuelve solo los items **pendientes** (muestra favoritos y notas si las tienen)
 - `/agregar [item]` → llama a la IA para deduplicar y crea o reactiva el item
 - `/compré [item]` → llama a la IA para identificar el item y lo marca como comprado
+- `/favoritos` → lista los items marcados como favoritos
 
 **Lógica de IA para matching** (`AIMatcherService`):
 - Se construye el listado actual del usuario
@@ -93,17 +98,17 @@ proyecto/
 - CRUD completo de comidas
 - Ver historial de sugerencias (campo `last_suggested_at`)
 
+**Flujo web (extendido)**:
+- Cada comida puede tener una lista de ingredientes (nombre + cantidad opcional, tabla `meal_ingredients`)
+
 **Flujo Telegram**:
 - `/comer` → devuelve 1 sugerencia random (excluyendo las sugeridas en los últimos 5 días)
+- `/ingredientes [comida]` → lista los ingredientes registrados para esa comida (busca por nombre, igual lógica que `/riego`)
 
 **Lógica anti-repetición**:
 - Al sugerir, filtrar `WHERE last_suggested_at IS NULL OR last_suggested_at < NOW() - INTERVAL 5 DAY`
 - Si no hay opciones disponibles en ese rango, ampliar automáticamente a 3 días, luego a 1 día
 - Actualizar `last_suggested_at` al momento de la sugerencia
-
-**Fase 2 (no implementar todavía)**:
-- Tabla `meal_ingredients` para asociar ingredientes a cada comida
-- Comando `/ingredientes [comida]` para ver qué se necesita
 
 ---
 
@@ -112,18 +117,25 @@ proyecto/
 **Propósito**: log de riego. Simple, con timestamp y comentario opcional. Útil para ver frecuencia y notas de cada planta.
 
 **Flujo web**:
-- CRUD de plantas
-- Timeline de logs por planta (fecha, comentario)
+- CRUD de plantas, con foto de perfil opcional (subida directa, disco `public`)
+- Timeline de logs por planta (fecha, comentario, foto opcional)
 
 **Flujo Telegram**:
 - `/plantas` → lista las plantas registradas (nombre + id corto o alias)
 - `/riego [planta]` → registra log con timestamp actual, sin comentario
 - `/riego [planta] [comentario]` → registra log con comentario
+- Foto con caption `/riego [planta]` → registra el riego adjuntando la foto al log
+- Foto con caption `/fotoplanta [planta]` → actualiza la foto de perfil de la planta
+- Foto sin caption reconocible → el bot explica las dos opciones de arriba (nunca asume la intención)
 
 **Lógica de identificación de planta**:
 - Si el usuario tiene una sola planta → no hace falta especificar, se asume esa
 - Si tiene varias → se busca por nombre (LIKE simple, las plantas las carga el usuario desde web con nombres controlados)
 - Si no matchea → el bot responde con la lista de plantas para que elija
+
+**Fotos por Telegram**:
+- El bot descarga el archivo vía `Nutgram::getFile()` + `File::url()`, lo trae con `Http::get()` y lo guarda en el disco `public` (`plants/` o `plant-logs/`)
+- Al reemplazar la foto de perfil desde la web se borra el archivo viejo del disco
 
 ---
 
@@ -142,6 +154,8 @@ shopping_items
   user_id (FK users)
   name
   purchased_at (timestamp, nullable)   ← null = pendiente
+  notes (text, nullable)
+  is_favorite (boolean, default false) ← sobrevive a "Limpiar comprados"
   created_at, updated_at
 
 -- Comidas
@@ -152,11 +166,20 @@ meals
   last_suggested_at (timestamp, nullable)
   created_at, updated_at
 
+-- Ingredientes de una comida
+meal_ingredients
+  id
+  meal_id (FK meals)
+  name
+  quantity (string, nullable)
+  created_at, updated_at
+
 -- Plantas
 plants
   id
   user_id (FK users)
   name
+  photo_path (string, nullable)        ← foto de perfil, disco "public"
   created_at, updated_at
 
 -- Logs de riego
@@ -164,6 +187,7 @@ plant_logs
   id
   plant_id (FK plants)
   notes (text, nullable)
+  photo_path (string, nullable)        ← foto opcional del riego, disco "public"
   created_at                            ← este es el timestamp del riego
 ```
 
@@ -176,10 +200,14 @@ plant_logs
 | `/lista` | Muestra items pendientes de compra |
 | `/agregar [item]` | Agrega item a la lista (con deduplicación por IA) |
 | `/compré [item]` | Marca item como comprado (con matching por IA) |
+| `/favoritos` | Lista los items marcados como favoritos |
 | `/comer` | Sugerencia random de qué comer (evita repetición reciente) |
+| `/ingredientes [comida]` | Lista los ingredientes registrados para esa comida |
 | `/plantas` | Lista las plantas registradas |
 | `/riego [planta]` | Registra riego de la planta especificada |
 | `/riego [planta] [comentario]` | Registra riego con nota adicional |
+| foto con caption `/riego [planta]` | Registra riego adjuntando la foto al log |
+| foto con caption `/fotoplanta [planta]` | Actualiza la foto de perfil de la planta |
 | `/ayuda` | Lista todos los comandos disponibles |
 
 ---

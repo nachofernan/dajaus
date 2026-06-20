@@ -32,6 +32,7 @@ class Dashboard extends Component
                 return (object) [
                     'id' => $plant->id,
                     'name' => $plant->name,
+                    'photo_url' => $plant->photo_url,
                     'last_watered' => $lastWatered,
                     'days_since' => $lastWatered ? (int) $lastWatered->diffInDays(now()) : null,
                 ];

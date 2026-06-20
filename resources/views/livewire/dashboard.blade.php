@@ -21,7 +21,12 @@
                     <ul class="space-y-2">
                         @foreach ($plants->take(3) as $plant)
                             <li class="flex items-center justify-between text-sm">
-                                <span class="text-gray-700">{{ $plant->name }}</span>
+                                <span class="flex items-center gap-2 text-gray-700">
+                                    @if ($plant->photo_url)
+                                        <img src="{{ $plant->photo_url }}" class="w-5 h-5 rounded-full object-cover">
+                                    @endif
+                                    {{ $plant->name }}
+                                </span>
                                 @if ($plant->days_since === null)
                                     <span class="text-amber-600 font-medium">Sin riegos</span>
                                 @elseif ($plant->days_since >= 7)

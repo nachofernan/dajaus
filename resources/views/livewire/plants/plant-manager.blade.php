@@ -12,25 +12,42 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-4">
                     {{ $editingId ? 'Editar planta' : 'Agregar planta' }}
                 </h3>
-                <form wire:submit="save" class="flex gap-3">
-                    <input
-                        wire:model="name"
-                        type="text"
-                        placeholder="Nombre de la planta"
-                        class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"
-                    />
-                    <button type="submit"
-                        class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition">
-                        {{ $editingId ? 'Guardar' : 'Agregar' }}
-                    </button>
-                    @if ($editingId)
-                        <button type="button" wire:click="cancelEdit"
-                            class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-300 transition">
-                            Cancelar
+                <form wire:submit="save" class="space-y-3">
+                    <div class="flex gap-3">
+                        <input
+                            wire:model="name"
+                            type="text"
+                            placeholder="Nombre de la planta"
+                            class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"
+                        />
+                        <button type="submit"
+                            class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition">
+                            {{ $editingId ? 'Guardar' : 'Agregar' }}
                         </button>
-                    @endif
+                        @if ($editingId)
+                            <button type="button" wire:click="cancelEdit"
+                                class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-300 transition">
+                                Cancelar
+                            </button>
+                        @endif
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <input
+                            wire:model="photo"
+                            type="file"
+                            accept="image/*"
+                            class="text-xs text-gray-500"
+                        />
+                        @if ($photo)
+                            <img src="{{ $photo->temporaryUrl() }}" class="w-10 h-10 rounded-full object-cover">
+                        @endif
+                    </div>
                 </form>
                 @error('name')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+                @error('photo')
                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
@@ -40,7 +57,14 @@
                 @forelse ($plants as $plant)
                     <div>
                         <div class="flex items-center justify-between px-6 py-4">
-                            <span class="text-gray-800 font-medium">{{ $plant->name }}</span>
+                            <div class="flex items-center gap-3">
+                                @if ($plant->photo_url)
+                                    <img src="{{ $plant->photo_url }}" class="w-8 h-8 rounded-full object-cover">
+                                @else
+                                    <span class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-sm">🌿</span>
+                                @endif
+                                <span class="text-gray-800 font-medium">{{ $plant->name }}</span>
+                            </div>
                             <div class="flex items-center gap-2">
                                 <button wire:click="toggleLogs({{ $plant->id }})"
                                     class="text-sm px-3 py-1 rounded-md {{ $viewingLogsId === $plant->id ? 'bg-green-100 text-green-700' : 'text-gray-500 hover:bg-gray-100' }} transition">
@@ -67,13 +91,18 @@
                                     <ul class="space-y-2 pt-2">
                                         @foreach ($plant->logs as $log)
                                             <li class="flex items-start justify-between text-sm">
-                                                <div>
-                                                    <span class="text-gray-500">
-                                                        {{ $log->created_at->format('d/m/Y H:i') }}
-                                                    </span>
-                                                    @if ($log->notes)
-                                                        <span class="ml-2 text-gray-700">— {{ $log->notes }}</span>
+                                                <div class="flex items-start gap-2">
+                                                    @if ($log->photo_url)
+                                                        <img src="{{ $log->photo_url }}" class="w-10 h-10 rounded-md object-cover flex-shrink-0">
                                                     @endif
+                                                    <div>
+                                                        <span class="text-gray-500">
+                                                            {{ $log->created_at->format('d/m/Y H:i') }}
+                                                        </span>
+                                                        @if ($log->notes)
+                                                            <span class="ml-2 text-gray-700">— {{ $log->notes }}</span>
+                                                        @endif
+                                                    </div>
                                                 </div>
                                                 <button wire:click="deleteLog({{ $log->id }})"
                                                     class="text-red-400 hover:text-red-600 ml-4 flex-shrink-0">

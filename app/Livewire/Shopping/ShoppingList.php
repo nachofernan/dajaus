@@ -7,6 +7,8 @@ use Livewire\Component;
 class ShoppingList extends Component
 {
     public string $name = '';
+    public ?int $editingNotesId = null;
+    public string $notesInput = '';
 
     protected $rules = [
         'name' => 'required|string|max:150',
@@ -40,6 +42,36 @@ class ShoppingList extends Component
         ]);
     }
 
+    public function toggleFavorite(int $id): void
+    {
+        $item = auth()->user()->shoppingItems()->findOrFail($id);
+        $item->update(['is_favorite' => !$item->is_favorite]);
+    }
+
+    public function editNotes(int $id): void
+    {
+        $item = auth()->user()->shoppingItems()->findOrFail($id);
+        $this->editingNotesId = $item->id;
+        $this->notesInput = $item->notes ?? '';
+    }
+
+    public function saveNotes(): void
+    {
+        if ($this->editingNotesId === null) {
+            return;
+        }
+
+        auth()->user()->shoppingItems()->findOrFail($this->editingNotesId)
+            ->update(['notes' => $this->notesInput !== '' ? $this->notesInput : null]);
+
+        $this->reset('editingNotesId', 'notesInput');
+    }
+
+    public function cancelNotes(): void
+    {
+        $this->reset('editingNotesId', 'notesInput');
+    }
+
     public function delete(int $id): void
     {
         auth()->user()->shoppingItems()->findOrFail($id)->delete();
@@ -47,18 +79,23 @@ class ShoppingList extends Component
 
     public function clearBought(): void
     {
-        auth()->user()->shoppingItems()->whereNotNull('purchased_at')->delete();
+        auth()->user()->shoppingItems()
+            ->whereNotNull('purchased_at')
+            ->where('is_favorite', false)
+            ->delete();
     }
 
     public function render()
     {
         $pending = auth()->user()->shoppingItems()
             ->whereNull('purchased_at')
+            ->orderBy('is_favorite', 'desc')
             ->orderBy('name')
             ->get();
 
         $bought = auth()->user()->shoppingItems()
             ->whereNotNull('purchased_at')
+            ->orderBy('is_favorite', 'desc')
             ->orderBy('purchased_at', 'desc')
             ->get();
 
