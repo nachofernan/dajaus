@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -31,6 +32,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'telegram_chat_id',
     ];
 
     /**
@@ -65,5 +67,20 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function shoppingItems(): HasMany
+    {
+        return $this->hasMany(ShoppingItem::class);
+    }
+
+    public function meals(): HasMany
+    {
+        return $this->hasMany(Meal::class);
+    }
+
+    public function plants(): HasMany
+    {
+        return $this->hasMany(Plant::class);
     }
 }

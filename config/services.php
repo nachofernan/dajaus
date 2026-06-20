@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'ai' => [
+        'api_key' => env('AI_API_KEY'),
+        'base_url' => env('AI_BASE_URL', 'https://api.groq.com/openai/v1/chat/completions'),
+        'model' => env('AI_MODEL_ANALYSIS', 'llama-3.1-8b-instant'),
+    ],
+
 ];

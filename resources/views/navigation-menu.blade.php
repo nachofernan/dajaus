@@ -15,6 +15,15 @@
                     <x-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    <x-nav-link href="{{ route('plants') }}" :active="request()->routeIs('plants')">
+                        🌿 Plantas
+                    </x-nav-link>
+                    <x-nav-link href="{{ route('meals') }}" :active="request()->routeIs('meals')">
+                        🍽 Comidas
+                    </x-nav-link>
+                    <x-nav-link href="{{ route('shopping') }}" :active="request()->routeIs('shopping')">
+                        🛒 Lista
+                    </x-nav-link>
                 </div>
             </div>
 
