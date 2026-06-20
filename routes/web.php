@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Dashboard;
 use App\Livewire\Meals\MealManager;
 use App\Livewire\Plants\PlantManager;
 use App\Livewire\Shopping\ShoppingList;
@@ -7,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 use SergiX44\Nutgram\Nutgram;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('dashboard');
 });
 
 Route::post('/telegram/webhook', function (Nutgram $bot) {
@@ -19,9 +20,7 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', Dashboard::class)->name('dashboard');
 
     Route::get('/plantas', PlantManager::class)->name('plants');
     Route::get('/comidas', MealManager::class)->name('meals');
